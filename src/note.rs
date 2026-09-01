@@ -176,10 +176,10 @@ pub fn folder_for_kind(kind: &str) -> &'static str {
 pub fn hub_for_kind(kind: &str) -> &'static str {
     match kind {
         "memory" => "Facts",
-        "identity" => "Hebert",
+        "identity" => "INDEX",
         "project" => "Projects",
         "entity" => "Entities",
-        "journal" => "Hebert",
+        "journal" => "INDEX",
         "sdd" => "SDD",
         "agent" => "Agents",
         "system" => "INDEX",
@@ -209,21 +209,21 @@ mod tests {
 
     #[test]
     fn parses_frontmatter_and_links() {
-        let raw = "---\nkind: memory\nstatus: active\ntags:\n  - fact\nupdated: 2026-08-31\n---\n# Hello\n\nSee [[Hebert]] and [[Facts]].\n";
+        let raw = "---\nkind: memory\nstatus: active\ntags:\n  - fact\nupdated: 2026-08-31\n---\n# Hello\n\nSee [[Person]] and [[Facts]].\n";
         let note = Note::parse("02-memory/Hello.md", raw).unwrap();
         assert_eq!(note.front.kind, "memory");
         assert_eq!(note.title(), "Hello");
-        assert_eq!(note.wikilinks(), vec!["Hebert".to_string(), "Facts".to_string()]);
+        assert_eq!(note.wikilinks(), vec!["Person".to_string(), "Facts".to_string()]);
         assert!(note.summary(80).contains("See"));
     }
 
     #[test]
     fn roundtrip_keeps_kind() {
-        let raw = "---\nkind: identity\nstatus: active\ntags: []\nupdated: 2026-08-31\n---\n# Hebert\n\nOwner.\n";
-        let mut note = Note::parse("01-identity/Hebert.md", raw).unwrap();
+        let raw = "---\nkind: identity\nstatus: active\ntags: []\nupdated: 2026-08-31\n---\n# Person\n\nOwner.\n";
+        let mut note = Note::parse("01-identity/Person.md", raw).unwrap();
         note.front.updated = "2026-09-01".into();
         let rendered = note.render().unwrap();
-        let again = Note::parse("01-identity/Hebert.md", &rendered).unwrap();
+        let again = Note::parse("01-identity/Person.md", &rendered).unwrap();
         assert_eq!(again.front.kind, "identity");
         assert_eq!(again.front.updated, "2026-09-01");
         assert!(again.body.contains("Owner"));
