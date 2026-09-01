@@ -1,7 +1,9 @@
 //! mneme — crash-safe shared-memory engine over a Markdown vault.
 //!
 //! Markdown is the cortex (source of truth). `.mneme/` is the hippocampus
-//! (SQLite FTS, ACT-R activation, journal). All durable notes are English.
+//! (SQLite FTS, ACT-R activation, journal). Durable notes are English.
+//!
+//! SPDX-License-Identifier: MIT OR Apache-2.0
 
 pub mod atomic;
 pub mod cli;
