@@ -8,7 +8,7 @@ Crash-safe **shared memory engine** for a Markdown vault. Windows, Linux, and ma
 
 Markdown notes are the source of truth (the cortex). mneme keeps a rebuildable index under `<vault>/.mneme/` (the hippocampus): atomic writes, a journal, full-text search, ACT-R style activation, spreading-activation recall with a token budget, and graph export.
 
-Durable notes, CLI output, and documentation in this repository are **English**.
+Durable notes, CLI output, and documentation in this repository are **English**. Vault **bodies** stay in the language they were written in; mneme records that language in frontmatter (`lang`) and does not translate.
 
 ## Features
 
@@ -63,6 +63,7 @@ mneme init
 mneme reindex
 mneme recall "cue" --tokens 700 --format ai
 mneme remember --kind memory --title "Title" --body "..."
+mneme remember --kind memory --title "Title" --lang pt --body "..."
 mneme graph
 mneme consolidate
 mneme doctor
@@ -73,7 +74,7 @@ mneme context
 
 ## Vault layout (convention)
 
-mneme does not require this layout, but recall and graph work best when notes are atomic, English, and linked with `[[wikilinks]]`:
+mneme does not require this layout, but recall and graph work best when notes are atomic, linked with `[[wikilinks]]`, and tagged with `lang` (ISO 639-1). New notes default to English. If the source to remember is another language, keep that body and set `lang` — do not translate.
 
 ```text
 vault/
