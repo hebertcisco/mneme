@@ -19,6 +19,9 @@ pub struct FrontMatter {
     pub tags: Vec<String>,
     #[serde(default)]
     pub updated: String,
+    /// ISO 639-1 (or similar). Empty means unspecified; treat as vault default.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub lang: String,
     #[serde(flatten)]
     pub extra: BTreeMap<String, serde_yaml::Value>,
 }
@@ -113,6 +116,11 @@ impl Note {
         } else {
             &self.front.kind
         }
+    }
+
+    /// Language tag for this note. Empty frontmatter → `fallback` (vault default).
+    pub fn lang_or(&self, fallback: &str) -> String {
+        crate::lang::resolve(&self.front.lang, fallback)
     }
 }
 
@@ -239,5 +247,16 @@ mod tests {
         assert_eq!(again.front.kind, "identity");
         assert_eq!(again.front.updated, "2026-09-01");
         assert!(again.body.contains("Owner"));
+    }
+
+    #[test]
+    fn roundtrip_keeps_lang() {
+        let raw = "---\nkind: memory\nstatus: active\ntags: []\nupdated: 2026-09-01\nlang: pt\n---\n# Citacao\n\nNão traduza.\n";
+        let note = Note::parse("02-memory/Citacao.md", raw).unwrap();
+        assert_eq!(note.front.lang, "pt");
+        assert_eq!(note.lang_or("en"), "pt");
+        let rendered = note.render().unwrap();
+        assert!(rendered.contains("lang: pt"));
+        assert!(rendered.contains("Não traduza"));
     }
 }

@@ -79,6 +79,7 @@ pub fn recall(vault: &Vault, index: &Index, opts: &RecallOpts) -> Result<String,
             summary: c.summary,
             activation: c.activation,
             links,
+            lang: c.lang,
         });
     }
     let _ = index.refresh_activation(&vault.config);
@@ -97,6 +98,7 @@ fn json_cards(cards: &[AiCard]) -> serde_json::Value {
             "summary": c.summary,
             "activation": c.activation,
             "links": c.links,
+            "lang": c.lang,
         }))
         .collect::<Vec<_>>())
 }

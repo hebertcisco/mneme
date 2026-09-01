@@ -12,8 +12,8 @@ pub fn render_ai_cards(query: &str, budget: usize, used: usize, cards: &[AiCard]
     for c in cards {
         out.push('\n');
         out.push_str(&format!(
-            "## {}  act={:.2}  {}\n",
-            c.title, c.activation, c.path
+            "## {}  act={:.2}  {}  lang={}\n",
+            c.title, c.activation, c.path, c.lang
         ));
         if !c.summary.is_empty() {
             out.push_str(&c.summary);
@@ -35,6 +35,7 @@ pub struct AiCard {
     pub summary: String,
     pub activation: f64,
     pub links: Vec<String>,
+    pub lang: String,
 }
 
 #[cfg(test)]
@@ -44,5 +45,20 @@ mod tests {
     #[test]
     fn token_estimate_grows_with_words() {
         assert!(estimate_tokens("one two three four") >= 4);
+    }
+
+    #[test]
+    fn ai_card_includes_lang() {
+        let cards = [AiCard {
+            title: "Quote".into(),
+            path: "02-memory/Quote.md".into(),
+            summary: "Não traduza.".into(),
+            activation: 0.5,
+            links: vec![],
+            lang: "pt".into(),
+        }];
+        let out = render_ai_cards("cue", 100, 40, &cards);
+        assert!(out.contains("lang=pt"));
+        assert!(out.contains("Não traduza"));
     }
 }

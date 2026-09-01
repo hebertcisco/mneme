@@ -8,6 +8,8 @@ pub struct RememberOpts {
     pub kind: String,
     pub title: String,
     pub body: String,
+    /// Explicit ISO 639-1 tag. When none, detect from title+body (no translation).
+    pub lang: Option<String>,
 }
 
 pub fn remember(
@@ -43,6 +45,11 @@ pub fn remember(
     if !body.contains("[[INDEX]]") && hub != "INDEX" {
         body.push_str("\nSee [[INDEX]].\n");
     }
+    let sample = format!("{title}\n{body}");
+    let lang = match opts.lang.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        Some(tag) => crate::lang::normalize(tag),
+        None => crate::lang::detect(&sample, &vault.config.language),
+    };
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let note = Note {
         id: slug.clone(),
@@ -52,6 +59,7 @@ pub fn remember(
             status: "active".into(),
             tags: Vec::new(),
             updated: today,
+            lang,
             extra: Default::default(),
         },
         body: format!("# {title}\n\n{body}"),
@@ -77,4 +85,59 @@ pub fn remember(
 
 fn fs_read(path: &std::path::Path) -> Result<String, MnemeError> {
     Ok(std::fs::read_to_string(path)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::index::Index;
+
+    fn fixture() -> (tempfile::TempDir, Vault, Index) {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("INDEX.md"), "# Index\n").unwrap();
+        let vault = Vault::open(dir.path().to_path_buf()).unwrap();
+        let index = Index::open(&vault.db_path()).unwrap();
+        (dir, vault, index)
+    }
+
+    #[test]
+    fn remember_keeps_portuguese_and_sets_lang() {
+        let (_dir, vault, index) = fixture();
+        let rel = remember(
+            &vault,
+            &index,
+            RememberOpts {
+                kind: "memory".into(),
+                title: "Citacao original".into(),
+                body: "Não traduza este parágrafo; grave no idioma original com metadata de língua."
+                    .into(),
+                lang: None,
+            },
+        )
+        .unwrap();
+        let raw = std::fs::read_to_string(vault.root.join(&rel)).unwrap();
+        assert!(raw.contains("lang: pt"), "frontmatter should tag Portuguese:\n{raw}");
+        assert!(raw.contains("Não traduza este parágrafo"));
+        assert!(!raw.to_lowercase().contains("do not translate"));
+    }
+
+    #[test]
+    fn remember_explicit_lang_wins_and_body_stays() {
+        let (_dir, vault, index) = fixture();
+        let body = "The vault index can be rebuilt from markdown notes without translation.";
+        let rel = remember(
+            &vault,
+            &index,
+            RememberOpts {
+                kind: "memory".into(),
+                title: "Quoted source".into(),
+                body: body.into(),
+                lang: Some("pt-BR".into()),
+            },
+        )
+        .unwrap();
+        let raw = std::fs::read_to_string(vault.root.join(&rel)).unwrap();
+        assert!(raw.contains("lang: pt"));
+        assert!(raw.contains(body));
+    }
 }

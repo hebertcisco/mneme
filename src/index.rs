@@ -32,6 +32,7 @@ impl Index {
               path TEXT NOT NULL UNIQUE,
               kind TEXT NOT NULL,
               status TEXT NOT NULL DEFAULT 'active',
+              lang TEXT NOT NULL DEFAULT 'en',
               title TEXT NOT NULL,
               body_hash TEXT NOT NULL,
               word_count INTEGER NOT NULL,
@@ -60,6 +61,7 @@ impl Index {
             );
             "#,
         )?;
+        migrate_notes_lang(&conn)?;
         Ok(Self { conn })
     }
 
@@ -102,21 +104,23 @@ impl Index {
         } else {
             note.front.status.clone()
         };
+        let lang = note.lang_or("en");
         let tags = note.front.tags.join(" ");
         self.conn.execute(
             r#"
-            INSERT INTO notes (id, path, kind, status, title, body_hash, word_count, token_est, summary, updated_ts)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+            INSERT INTO notes (id, path, kind, status, lang, title, body_hash, word_count, token_est, summary, updated_ts)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
             ON CONFLICT(id) DO UPDATE SET
-              path=excluded.path, kind=excluded.kind, status=excluded.status, title=excluded.title,
-              body_hash=excluded.body_hash, word_count=excluded.word_count, token_est=excluded.token_est,
-              summary=excluded.summary, updated_ts=excluded.updated_ts
+              path=excluded.path, kind=excluded.kind, status=excluded.status, lang=excluded.lang,
+              title=excluded.title, body_hash=excluded.body_hash, word_count=excluded.word_count,
+              token_est=excluded.token_est, summary=excluded.summary, updated_ts=excluded.updated_ts
             "#,
             params![
                 note.id,
                 note.rel_path,
                 kind,
                 status,
+                lang,
                 note.title(),
                 hash,
                 words,
@@ -214,7 +218,7 @@ impl Index {
         let mut stmt = self.conn.prepare(
             r#"
             SELECT n.id, n.path, n.kind, n.status, n.title, n.summary, n.token_est,
-                   COALESCE(a.base_level, 0)
+                   COALESCE(a.base_level, 0), COALESCE(n.lang, 'en')
             FROM notes n
             LEFT JOIN activation a ON a.note_id = n.id
             "#,
@@ -229,6 +233,7 @@ impl Index {
                 summary: r.get(5)?,
                 token_est: r.get::<_, i64>(6)? as usize,
                 activation: r.get(7)?,
+                lang: r.get(8)?,
             })
         })?;
         Ok(rows.filter_map(|r| r.ok()).collect())
@@ -274,6 +279,7 @@ pub struct Card {
     pub summary: String,
     pub token_est: usize,
     pub activation: f64,
+    pub lang: String,
 }
 
 fn fts_query(raw: &str) -> String {
@@ -306,6 +312,21 @@ fn parse_updated(s: &str) -> Option<i64> {
         .ok()
         .and_then(|d| d.and_hms_opt(0, 0, 0))
         .map(|dt| dt.and_utc().timestamp())
+}
+
+fn migrate_notes_lang(conn: &Connection) -> Result<(), MnemeError> {
+    let mut stmt = conn.prepare("PRAGMA table_info(notes)")?;
+    let cols: Vec<String> = stmt
+        .query_map([], |r| r.get::<_, String>(1))?
+        .filter_map(|r| r.ok())
+        .collect();
+    if !cols.iter().any(|c| c == "lang") {
+        conn.execute(
+            "ALTER TABLE notes ADD COLUMN lang TEXT NOT NULL DEFAULT 'en'",
+            [],
+        )?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]

@@ -35,7 +35,7 @@ enum Command {
         #[arg(long, default_value = "ai")]
         format: String,
     },
-    /// Write a new English note
+    /// Write a new note. Body is stored in the source language; `lang` is tagged.
     Remember {
         #[arg(long, default_value = "memory")]
         kind: String,
@@ -43,6 +43,9 @@ enum Command {
         title: String,
         #[arg(long)]
         body: Option<String>,
+        /// ISO 639-1 tag (e.g. pt). Detected from the body when omitted.
+        #[arg(long)]
+        lang: Option<String>,
     },
     /// Export wikilink graph
     Graph,
@@ -106,7 +109,12 @@ pub fn run() -> Result<()> {
             )?;
             print!("{out}");
         }
-        Command::Remember { kind, title, body } => {
+        Command::Remember {
+            kind,
+            title,
+            body,
+            lang,
+        } => {
             let vault = open_vault(&root)?;
             let index = Index::open(&vault.db_path())?;
             let body = match body {
@@ -121,7 +129,16 @@ pub fn run() -> Result<()> {
                     }
                 }
             };
-            let rel = crate::encode::remember(&vault, &index, RememberOpts { kind, title, body })?;
+            let rel = crate::encode::remember(
+                &vault,
+                &index,
+                RememberOpts {
+                    kind,
+                    title,
+                    body,
+                    lang,
+                },
+            )?;
             println!("wrote {rel}");
         }
         Command::Graph => {
