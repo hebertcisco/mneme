@@ -310,8 +310,6 @@ fn parse_updated(s: &str) -> Option<i64> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn act_r_is_finite() {
         let age = 3600.0_f64;
