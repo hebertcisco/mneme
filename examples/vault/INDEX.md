@@ -3,7 +3,8 @@ kind: system
 status: active
 tags:
   - example
-updated: 2026-08-31
+updated: 2026-09-01
+lang: en
 ---
 
 # Shared memory

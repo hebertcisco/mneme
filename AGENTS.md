@@ -27,6 +27,7 @@ The vault path is always injected at runtime (`--vault`, `MNEME_VAULT`, or the u
 | `src/index.rs` | SQLite WAL + FTS5 + activation |
 | `src/recall.rs` | Ranked, token-budgeted retrieval |
 | `src/encode.rs` | `remember` / update notes |
+| `src/lang.rs` | Language tags and detection (no translation) |
 | `src/graph.rs` | Export `graph/data.js` and mermaid |
 | `src/consolidate.rs` | Decay / promotion pass |
 | `src/doctor.rs` | Repair tmp, rebuild index, report conflicts |
@@ -50,8 +51,9 @@ cargo run -- --vault examples/vault recall "index" --format ai --tokens 400
 - rustfmt, 4-space indent, edition 2021
 - `snake_case` items, `PascalCase` types, `SCREAMING_SNAKE_CASE` constants
 - Library paths return `Result`; do not `unwrap` except in tests
-- User-facing strings and example notes are English
+- User-facing strings and contributor docs are English
 - Do not hard-code a person's name as a wiki hub; use `INDEX` / configurable hubs
+- New notes default to English. Source bodies in another language stay as written; tag `lang` (ISO 639-1)
 
 ## Tests
 
