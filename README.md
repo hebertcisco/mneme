@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="art/mnemosine.png" alt="Mnemosyne, Greek goddess of memory, holding a stylus and a scroll" width="320">
+</p>
+
 # mneme
 
 Crash-safe **shared memory engine** for a Markdown vault. Windows, Linux, and macOS.
