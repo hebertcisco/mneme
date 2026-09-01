@@ -160,9 +160,9 @@ impl Index {
         let d = cfg.decay;
         for id in ids {
             let times: Vec<i64> = {
-                let mut stmt = self
-                    .conn
-                    .prepare("SELECT ts FROM accesses WHERE note_id = ?1 ORDER BY ts DESC LIMIT 24")?;
+                let mut stmt = self.conn.prepare(
+                    "SELECT ts FROM accesses WHERE note_id = ?1 ORDER BY ts DESC LIMIT 24",
+                )?;
                 let rows = stmt.query_map(params![id], |r| r.get::<_, i64>(0))?;
                 rows.filter_map(|r| r.ok()).collect()
             };
@@ -252,15 +252,14 @@ impl Index {
     }
 
     pub fn links_from(&self, id: &str) -> Result<Vec<String>, MnemeError> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT dst FROM links WHERE src = ?1")?;
+        let mut stmt = self.conn.prepare("SELECT dst FROM links WHERE src = ?1")?;
         let rows = stmt.query_map(params![id], |r| r.get::<_, String>(0))?;
         Ok(rows.filter_map(|r| r.ok()).collect())
     }
 
     pub fn vacuum(&self) -> Result<(), MnemeError> {
-        self.conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")?;
+        self.conn
+            .execute_batch("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")?;
         Ok(())
     }
 }

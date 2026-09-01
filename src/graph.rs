@@ -109,7 +109,11 @@ fn patch_mermaid(vault: &Vault, g: &GraphFile) -> Result<(), MnemeError> {
     }
     for e in &g.edges {
         if ids.contains(e.from.as_str()) && ids.contains(e.to.as_str()) {
-            lines.push(format!("  {} --> {}", mermaid_id(&e.from), mermaid_id(&e.to)));
+            lines.push(format!(
+                "  {} --> {}",
+                mermaid_id(&e.from),
+                mermaid_id(&e.to)
+            ));
         }
     }
     lines.push("```".into());
@@ -142,7 +146,13 @@ fn replace_block(raw: &str, block: &str) -> String {
 fn mermaid_id(id: &str) -> String {
     let mut s: String = id
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect();
     if s.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(true) {
         s = format!("N_{s}");

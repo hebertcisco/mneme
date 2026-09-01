@@ -31,27 +31,28 @@ impl Default for Config {
 /// Resolve the vault directory without assuming a personal machine layout.
 ///
 /// Order: `MNEME_VAULT` → `vault` in the user config file → current dir if it
-/// looks like a vault. Callers still honor an explicit `--vault` flag first.
-pub fn default_vault_path() -> PathBuf {
+/// contains `INDEX.md`. Callers still honor an explicit `--vault` flag first.
+/// A code repo that only has contributor `AGENTS.md` is not treated as a vault.
+pub fn resolve_vault_path() -> Result<PathBuf, MnemeError> {
     if let Ok(v) = env::var("MNEME_VAULT") {
         if !v.trim().is_empty() {
-            return PathBuf::from(v);
+            return Ok(PathBuf::from(v));
         }
     }
     if let Some(cfg) = load_user_config() {
         if let Some(vault) = cfg.vault {
-            return vault;
+            return Ok(vault);
         }
     }
     let cwd = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     if looks_like_vault(&cwd) {
-        return cwd;
+        return Ok(cwd);
     }
-    cwd
+    Err(MnemeError::NoVault(cwd))
 }
 
 pub fn looks_like_vault(dir: &Path) -> bool {
-    dir.join("INDEX.md").is_file() || dir.join("AGENTS.md").is_file()
+    dir.join("INDEX.md").is_file()
 }
 
 pub fn user_config_path() -> Option<PathBuf> {
@@ -121,7 +122,12 @@ mod tests {
     }
 
     #[test]
-    fn looks_like_vault_needs_index_or_agents() {
-        assert!(!looks_like_vault(Path::new("/this/does/not/exist-mneme")));
+    fn looks_like_vault_needs_index_not_agents_alone() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(!looks_like_vault(dir.path()));
+        fs::write(dir.path().join("AGENTS.md"), "# agents\n").unwrap();
+        assert!(!looks_like_vault(dir.path()));
+        fs::write(dir.path().join("INDEX.md"), "# index\n").unwrap();
+        assert!(looks_like_vault(dir.path()));
     }
 }

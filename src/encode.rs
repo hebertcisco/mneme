@@ -10,7 +10,11 @@ pub struct RememberOpts {
     pub body: String,
 }
 
-pub fn remember(vault: &Vault, index: &crate::index::Index, opts: RememberOpts) -> Result<String, MnemeError> {
+pub fn remember(
+    vault: &Vault,
+    index: &crate::index::Index,
+    opts: RememberOpts,
+) -> Result<String, MnemeError> {
     let kind = if opts.kind.is_empty() {
         "memory".into()
     } else {

@@ -5,10 +5,16 @@ pub fn estimate_tokens(s: &str) -> usize {
 
 pub fn render_ai_cards(query: &str, budget: usize, used: usize, cards: &[AiCard]) -> String {
     let mut out = String::new();
-    out.push_str(&format!("# mneme recall\nquery: {query}\ntokens: {used}/{budget}\ncards: {}\n", cards.len()));
+    out.push_str(&format!(
+        "# mneme recall\nquery: {query}\ntokens: {used}/{budget}\ncards: {}\n",
+        cards.len()
+    ));
     for c in cards {
         out.push('\n');
-        out.push_str(&format!("## {}  act={:.2}  {}\n", c.title, c.activation, c.path));
+        out.push_str(&format!(
+            "## {}  act={:.2}  {}\n",
+            c.title, c.activation, c.path
+        ));
         if !c.summary.is_empty() {
             out.push_str(&c.summary);
             out.push('\n');

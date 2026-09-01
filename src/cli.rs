@@ -63,17 +63,24 @@ enum Command {
 
 pub fn run() -> Result<()> {
     let args = Args::parse();
-    let root = args.vault.unwrap_or_else(config::default_vault_path);
+    let root = match args.vault {
+        Some(p) => p,
+        None => config::resolve_vault_path()?,
+    };
     match args.cmd {
         Command::Init => {
-            let vault = Vault::open(root.clone()).with_context(|| format!("open {}", root.display()))?;
+            let vault = open_vault(&root)?;
             let index = Index::open(&vault.db_path())?;
             let n = index.rebuild(&vault)?;
             let (nodes, edges) = crate::graph::export(&vault)?;
-            println!("initialized {} notes, graph {nodes}/{edges} at {}", n, vault.root.display());
+            println!(
+                "initialized {} notes, graph {nodes}/{edges} at {}",
+                n,
+                vault.root.display()
+            );
         }
         Command::Reindex => {
-            let vault = Vault::open(root)?;
+            let vault = open_vault(&root)?;
             let index = Index::open(&vault.db_path())?;
             let n = index.rebuild(&vault)?;
             println!("reindexed {n} notes");
@@ -83,7 +90,7 @@ pub fn run() -> Result<()> {
             tokens,
             format,
         } => {
-            let vault = Vault::open(root)?;
+            let vault = open_vault(&root)?;
             let index = Index::open(&vault.db_path())?;
             if index.cards()?.is_empty() {
                 index.rebuild(&vault)?;
@@ -100,7 +107,7 @@ pub fn run() -> Result<()> {
             print!("{out}");
         }
         Command::Remember { kind, title, body } => {
-            let vault = Vault::open(root)?;
+            let vault = open_vault(&root)?;
             let index = Index::open(&vault.db_path())?;
             let body = match body {
                 Some(b) => b,
@@ -114,29 +121,25 @@ pub fn run() -> Result<()> {
                     }
                 }
             };
-            let rel = crate::encode::remember(
-                &vault,
-                &index,
-                RememberOpts { kind, title, body },
-            )?;
+            let rel = crate::encode::remember(&vault, &index, RememberOpts { kind, title, body })?;
             println!("wrote {rel}");
         }
         Command::Graph => {
-            let vault = Vault::open(root)?;
+            let vault = open_vault(&root)?;
             let (nodes, edges) = crate::graph::export(&vault)?;
             println!("graph: {nodes} nodes, {edges} edges");
         }
         Command::Consolidate => {
-            let vault = Vault::open(root)?;
+            let vault = open_vault(&root)?;
             let index = Index::open(&vault.db_path())?;
             println!("{}", crate::consolidate::run(&vault, &index)?);
         }
         Command::Doctor => {
-            let vault = Vault::open(root)?;
+            let vault = open_vault(&root)?;
             println!("{}", crate::doctor::run(&vault)?);
         }
         Command::Status => {
-            let vault = Vault::open(root)?;
+            let vault = open_vault(&root)?;
             let notes = vault.iter_notes()?.len();
             println!("vault:  {}", vault.root.display());
             println!("index:  {}", vault.db_path().display());
@@ -144,7 +147,7 @@ pub fn run() -> Result<()> {
             println!("lang:   {}", vault.config.language);
         }
         Command::Show { id } => {
-            let vault = Vault::open(root)?;
+            let vault = open_vault(&root)?;
             let notes = vault.iter_notes()?;
             let Some(note) = notes.iter().find(|n| n.id.eq_ignore_ascii_case(&id)) else {
                 anyhow::bail!("note not found: {id}");
@@ -153,7 +156,7 @@ pub fn run() -> Result<()> {
             print!("{}", note.raw);
         }
         Command::Context { tokens } => {
-            let vault = Vault::open(root)?;
+            let vault = open_vault(&root)?;
             let index = Index::open(&vault.db_path())?;
             if index.cards()?.is_empty() {
                 index.rebuild(&vault)?;
@@ -173,6 +176,10 @@ pub fn run() -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn open_vault(root: &PathBuf) -> Result<Vault> {
+    Vault::open(root.clone()).with_context(|| format!("open vault {}", root.display()))
 }
 
 fn atty_stdin() -> bool {

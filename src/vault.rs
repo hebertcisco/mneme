@@ -1,5 +1,6 @@
 use std::fs::{self, File, OpenOptions};
-use std::path::PathBuf;
+use std::io;
+use std::path::{Path, PathBuf};
 
 use fs4::fs_std::FileExt;
 use walkdir::WalkDir;
@@ -35,15 +36,17 @@ impl Vault {
             return Err(MnemeError::VaultMissing(root));
         }
         let mneme_dir = root.join(".mneme");
-        fs::create_dir_all(&mneme_dir)?;
-        fs::create_dir_all(mneme_dir.join("tmp"))?;
+        fs::create_dir_all(&mneme_dir).map_err(|e| io_path(&mneme_dir, e))?;
+        fs::create_dir_all(mneme_dir.join("tmp"))
+            .map_err(|e| io_path(&mneme_dir.join("tmp"), e))?;
         let lock_path = mneme_dir.join("lock");
         let lock_file = OpenOptions::new()
             .create(true)
             .read(true)
             .write(true)
             .truncate(false)
-            .open(&lock_path)?;
+            .open(&lock_path)
+            .map_err(|e| io_path(&lock_path, e))?;
         if lock_file.try_lock_exclusive().is_err() {
             return Err(MnemeError::Locked);
         }
@@ -114,7 +117,15 @@ impl Drop for Vault {
 }
 
 fn should_skip(rel: &str) -> bool {
-    SKIP.iter().any(|p| rel == *p || rel.starts_with(&format!("{p}/")))
+    SKIP.iter()
+        .any(|p| rel == *p || rel.starts_with(&format!("{p}/")))
+}
+
+fn io_path(path: &Path, err: io::Error) -> MnemeError {
+    MnemeError::Io(io::Error::new(
+        err.kind(),
+        format!("{}: {err}", path.display()),
+    ))
 }
 
 #[cfg(test)]
@@ -127,5 +138,14 @@ mod tests {
         assert!(should_skip(".obsidian/app.json"));
         assert!(should_skip(".mneme/index.sqlite"));
         assert!(!should_skip("02-memory/Facts.md"));
+    }
+
+    #[test]
+    fn open_fresh_vault_creates_config() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("INDEX.md"), "# Index\n").unwrap();
+        let vault = Vault::open(dir.path().to_path_buf()).unwrap();
+        assert!(vault.mneme_dir().join("config.toml").is_file());
+        assert_eq!(vault.config.language, "en");
     }
 }

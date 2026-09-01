@@ -54,7 +54,7 @@ vault = "/path/to/your/vault"
 language = "en"
 ```
 
-If `MNEME_VAULT` is unset and the current directory looks like a vault (`INDEX.md` or `AGENTS.md`), that directory is used.
+If `MNEME_VAULT` is unset and the current directory contains `INDEX.md`, that directory is used. Otherwise mneme exits and asks you to pass `--vault` or set `MNEME_VAULT`. A repository that only has a contributor `AGENTS.md` is not treated as a vault.
 
 ### Commands
 

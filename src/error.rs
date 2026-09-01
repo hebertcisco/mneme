@@ -7,6 +7,10 @@ use thiserror::Error;
 pub enum MnemeError {
     #[error("vault not found: {0}")]
     VaultMissing(PathBuf),
+    #[error(
+        "no vault selected (cwd is {0}). Pass --vault PATH, set MNEME_VAULT, or add vault in the user config file"
+    )]
+    NoVault(PathBuf),
     #[error("invalid note {path}: {message}")]
     InvalidNote { path: PathBuf, message: String },
     #[error("vault is locked by another mneme process")]

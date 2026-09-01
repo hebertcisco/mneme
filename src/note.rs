@@ -61,7 +61,7 @@ impl Note {
         } else {
             format!("\n{}", self.body)
         };
-        Ok(format!("---\n{yaml}---\n{body}"))
+        Ok(format!("---\n{yaml}\n---\n{body}"))
     }
 
     pub fn wikilinks(&self) -> Vec<String> {
@@ -122,7 +122,10 @@ pub fn split_frontmatter(raw: &str) -> Result<(FrontMatter, String), MnemeError>
         return Ok((FrontMatter::default(), text.to_string()));
     }
     let rest = &text[3..];
-    let rest = rest.strip_prefix('\n').or_else(|| rest.strip_prefix("\r\n")).unwrap_or(rest);
+    let rest = rest
+        .strip_prefix('\n')
+        .or_else(|| rest.strip_prefix("\r\n"))
+        .unwrap_or(rest);
     let Some(end) = rest.find("\n---") else {
         return Ok((FrontMatter::default(), text.to_string()));
     };
@@ -190,7 +193,13 @@ pub fn hub_for_kind(kind: &str) -> &'static str {
 pub fn slug_title(title: &str) -> String {
     let mut s: String = title
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() || c == '-' { c } else { ' ' })
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' {
+                c
+            } else {
+                ' '
+            }
+        })
         .collect();
     while s.contains("  ") {
         s = s.replace("  ", " ");
@@ -213,7 +222,10 @@ mod tests {
         let note = Note::parse("02-memory/Hello.md", raw).unwrap();
         assert_eq!(note.front.kind, "memory");
         assert_eq!(note.title(), "Hello");
-        assert_eq!(note.wikilinks(), vec!["Person".to_string(), "Facts".to_string()]);
+        assert_eq!(
+            note.wikilinks(),
+            vec!["Person".to_string(), "Facts".to_string()]
+        );
         assert!(note.summary(80).contains("See"));
     }
 

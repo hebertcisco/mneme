@@ -25,7 +25,9 @@ pub fn run(vault: &Vault) -> Result<String, MnemeError> {
     let db = vault.db_path();
     if db.exists() {
         let ping = rusqlite::Connection::open(&db).and_then(|c| {
-            c.query_row("SELECT count(*) FROM sqlite_master", [], |r| r.get::<_, i64>(0))
+            c.query_row("SELECT count(*) FROM sqlite_master", [], |r| {
+                r.get::<_, i64>(0)
+            })
         });
         if ping.is_err() {
             let _ = fs::remove_file(&db);
