@@ -1,5 +1,3 @@
-use anyhow::Context;
-
 fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
@@ -14,9 +12,4 @@ fn main() {
         eprintln!("mneme error: {err:#}");
         std::process::exit(1);
     }
-}
-
-#[allow(dead_code)]
-fn _context_helper() {
-    let _ = ().context("cli");
 }

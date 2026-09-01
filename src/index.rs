@@ -209,6 +209,89 @@ impl Index {
         }
         Ok(map)
     }
+
+    pub fn cards(&self) -> Result<Vec<Card>, MnemeError> {
+        let mut stmt = self.conn.prepare(
+            r#"
+            SELECT n.id, n.path, n.kind, n.status, n.title, n.summary, n.token_est,
+                   COALESCE(a.base_level, 0)
+            FROM notes n
+            LEFT JOIN activation a ON a.note_id = n.id
+            "#,
+        )?;
+        let rows = stmt.query_map([], |r| {
+            Ok(Card {
+                id: r.get(0)?,
+                path: r.get(1)?,
+                kind: r.get(2)?,
+                status: r.get(3)?,
+                title: r.get(4)?,
+                summary: r.get(5)?,
+                token_est: r.get::<_, i64>(6)? as usize,
+                activation: r.get(7)?,
+            })
+        })?;
+        Ok(rows.filter_map(|r| r.ok()).collect())
+    }
+
+    pub fn fts_search(&self, query: &str) -> Result<Vec<(String, f64)>, MnemeError> {
+        let q = fts_query(query);
+        if q.is_empty() {
+            return Ok(Vec::new());
+        }
+        let mut stmt = self.conn.prepare(
+            "SELECT id, bm25(notes_fts) FROM notes_fts WHERE notes_fts MATCH ?1 ORDER BY bm25(notes_fts) LIMIT 40",
+        )?;
+        let rows = match stmt.query_map(params![q], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, f64>(1)?))
+        }) {
+            Ok(rows) => rows,
+            Err(_) => return Ok(Vec::new()),
+        };
+        Ok(rows.filter_map(|r| r.ok()).collect())
+    }
+
+    pub fn links_from(&self, id: &str) -> Result<Vec<String>, MnemeError> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT dst FROM links WHERE src = ?1")?;
+        let rows = stmt.query_map(params![id], |r| r.get::<_, String>(0))?;
+        Ok(rows.filter_map(|r| r.ok()).collect())
+    }
+
+    pub fn vacuum(&self) -> Result<(), MnemeError> {
+        self.conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Card {
+    pub id: String,
+    pub path: String,
+    pub kind: String,
+    pub status: String,
+    pub title: String,
+    pub summary: String,
+    pub token_est: usize,
+    pub activation: f64,
+}
+
+fn fts_query(raw: &str) -> String {
+    const STOP: &[&str] = &[
+        "a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "is", "are", "be",
+    ];
+    raw.split_whitespace()
+        .filter(|t| t.len() > 1 && !STOP.iter().any(|s| s.eq_ignore_ascii_case(t)))
+        .map(|t| {
+            t.chars()
+                .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
+                .collect::<String>()
+        })
+        .filter(|t| !t.is_empty())
+        .map(|t| format!("\"{t}\""))
+        .collect::<Vec<_>>()
+        .join(" OR ")
 }
 
 pub fn sha256(bytes: &[u8]) -> String {
