@@ -175,37 +175,34 @@ fn latin_scores(text: &str) -> Vec<(&'static str, i32)> {
 }
 
 const EN: &[&str] = &[
-    "the", "and", "that", "this", "with", "from", "have", "were", "been", "will",
-    "would", "there", "their", "about", "which", "when", "what", "into", "also",
-    "note", "vault", "index", "memory",
+    "the", "and", "that", "this", "with", "from", "have", "were", "been", "will", "would", "there",
+    "their", "about", "which", "when", "what", "into", "also", "note", "vault", "index", "memory",
 ];
 const PT: &[&str] = &[
-    "não", "nao", "você", "voce", "vocês", "voces", "então", "entao", "também",
-    "tambem", "pelo", "pela", "pelos", "pelas", "uma", "isso", "isto", "aqui",
-    "muito", "mais", "porque", "quando", "onde", "nós", "nos", "eles", "elas",
-    "meu", "minha", "está", "esta", "estão", "estao", "são", "sao", "foi", "pra",
-    "dos", "das", "num", "numa", "ninguém", "ninguem", "alguém", "alguem", "ainda",
-    "hoje", "ontem", "amanhã", "amanha", "depois", "antes", "agora", "para", "com",
-    "que", "uma", "este", "essa", "esse", "desta", "deste", "nesta", "neste",
+    "não", "nao", "você", "voce", "vocês", "voces", "então", "entao", "também", "tambem", "pelo",
+    "pela", "pelos", "pelas", "uma", "isso", "isto", "aqui", "muito", "mais", "porque", "quando",
+    "onde", "nós", "nos", "eles", "elas", "meu", "minha", "está", "esta", "estão", "estao", "são",
+    "sao", "foi", "pra", "dos", "das", "num", "numa", "ninguém", "ninguem", "alguém", "alguem",
+    "ainda", "hoje", "ontem", "amanhã", "amanha", "depois", "antes", "agora", "para", "com", "que",
+    "uma", "este", "essa", "esse", "desta", "deste", "nesta", "neste",
 ];
 const ES: &[&str] = &[
-    "usted", "ustedes", "entonces", "también", "tambien", "una", "unos", "unas",
-    "eso", "esto", "aquí", "aqui", "muy", "más", "mas", "pero", "porque", "cuando",
-    "donde", "nosotros", "ellos", "ellas", "está", "están", "estan", "los", "las",
-    "del", "fue", "hay", "como", "para", "con", "este", "esta", "ese", "esa",
+    "usted", "ustedes", "entonces", "también", "tambien", "una", "unos", "unas", "eso", "esto",
+    "aquí", "aqui", "muy", "más", "mas", "pero", "porque", "cuando", "donde", "nosotros", "ellos",
+    "ellas", "está", "están", "estan", "los", "las", "del", "fue", "hay", "como", "para", "con",
+    "este", "esta", "ese", "esa",
 ];
 const FR: &[&str] = &[
-    "les", "des", "une", "est", "pas", "que", "pour", "dans", "avec", "plus",
-    "cette", "tout", "fait", "être", "etre", "aussi", "mais", "nous", "vous",
-    "sont", "été", "ete",
+    "les", "des", "une", "est", "pas", "que", "pour", "dans", "avec", "plus", "cette", "tout",
+    "fait", "être", "etre", "aussi", "mais", "nous", "vous", "sont", "été", "ete",
 ];
 const DE: &[&str] = &[
-    "und", "der", "die", "das", "nicht", "ein", "eine", "ist", "von", "mit",
-    "den", "auf", "für", "fur", "sich", "auch", "als", "werden", "wird", "haben",
+    "und", "der", "die", "das", "nicht", "ein", "eine", "ist", "von", "mit", "den", "auf", "für",
+    "fur", "sich", "auch", "als", "werden", "wird", "haben",
 ];
 const IT: &[&str] = &[
-    "che", "non", "una", "per", "con", "del", "della", "sono", "questo", "come",
-    "più", "piu", "anche", "delle", "nel", "alla", "gli",
+    "che", "non", "una", "per", "con", "del", "della", "sono", "questo", "come", "più", "piu",
+    "anche", "delle", "nel", "alla", "gli",
 ];
 
 #[cfg(test)]

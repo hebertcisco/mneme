@@ -36,6 +36,16 @@ pub fn remember(
         )));
     }
     let hub = hub_for_kind(&kind);
+    let source = format!("{title}\n{}", opts.body.trim());
+    let lang = match opts
+        .lang
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        Some(tag) => crate::lang::normalize(tag),
+        None => crate::lang::detect(&source, &vault.config.language),
+    };
     let mut body = opts.body.trim().to_string();
     if body.is_empty() {
         body = format!("Related: [[{hub}]]\n");
@@ -45,11 +55,6 @@ pub fn remember(
     if !body.contains("[[INDEX]]") && hub != "INDEX" {
         body.push_str("\nSee [[INDEX]].\n");
     }
-    let sample = format!("{title}\n{body}");
-    let lang = match opts.lang.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
-        Some(tag) => crate::lang::normalize(tag),
-        None => crate::lang::detect(&sample, &vault.config.language),
-    };
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let note = Note {
         id: slug.clone(),
@@ -109,14 +114,18 @@ mod tests {
             RememberOpts {
                 kind: "memory".into(),
                 title: "Citacao original".into(),
-                body: "Não traduza este parágrafo; grave no idioma original com metadata de língua."
-                    .into(),
+                body:
+                    "Não traduza este parágrafo; grave no idioma original com metadata de língua."
+                        .into(),
                 lang: None,
             },
         )
         .unwrap();
         let raw = std::fs::read_to_string(vault.root.join(&rel)).unwrap();
-        assert!(raw.contains("lang: pt"), "frontmatter should tag Portuguese:\n{raw}");
+        assert!(
+            raw.contains("lang: pt"),
+            "frontmatter should tag Portuguese:\n{raw}"
+        );
         assert!(raw.contains("Não traduza este parágrafo"));
         assert!(!raw.to_lowercase().contains("do not translate"));
     }
