@@ -1,3 +1,9 @@
 /target
 *.pdb
 .mneme-tmp
+**/.mneme/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.DS_Store
+Thumbs.db
